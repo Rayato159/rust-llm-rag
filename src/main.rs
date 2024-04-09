@@ -1,11 +1,10 @@
-use std::time::Duration;
-
 use axum::error_handling::HandleErrorLayer;
 use axum::http::{Method, StatusCode};
 use axum::routing::get;
 use axum::{BoxError, Router};
 use rust_llm_rag::infrastructure::vector_db::{init_client, QdrantDb};
 use rust_llm_rag::startup::setting::Setting;
+use std::time::Duration;
 use tower::timeout::TimeoutLayer;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
