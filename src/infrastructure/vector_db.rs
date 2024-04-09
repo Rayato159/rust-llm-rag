@@ -8,8 +8,8 @@ pub struct QdrantDb {
 }
 
 pub fn init_client(setting: Arc<Setting>) -> QdrantClient {
-    let host = setting.qdrant_host.clone();
-    let port = setting.qdrant_port.clone();
+    let host = setting.vector_db.host.clone();
+    let port = setting.vector_db.port.clone();
 
     let uri = format!("http://{}:{}", host, port);
 
