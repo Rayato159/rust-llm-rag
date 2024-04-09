@@ -58,6 +58,4 @@ async fn main() {
     info!("🦀 Server is starting on: :{}", setting.server.port);
 
     axum::serve(listener, app).await.unwrap();
-
-    println!("{:?}", setting);
 }
