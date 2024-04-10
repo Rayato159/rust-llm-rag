@@ -7,10 +7,10 @@ use axum::{http, response::IntoResponse, Json};
 use std::sync::Arc;
 
 pub async fn doc_reading(setting: Arc<Setting>) -> impl IntoResponse {
-    let content = usecase::doc_reading(setting).await;
+    let document = usecase::doc_reading(setting).await;
 
-    match content {
-        Ok(r) => (http::StatusCode::OK, Json(DocReadingSuccess { content: r })).into_response(),
+    match document {
+        Ok(r) => (http::StatusCode::OK, Json(DocReadingSuccess { document: r })).into_response(),
         Err(e) => (
             http::StatusCode::INTERNAL_SERVER_ERROR,
             Json(DocReadingError {

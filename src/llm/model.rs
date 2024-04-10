@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DocReadingSuccess {
-    pub content: String,
+    pub document: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
