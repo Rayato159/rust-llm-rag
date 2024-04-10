@@ -1,9 +1,10 @@
 use axum::error_handling::HandleErrorLayer;
 use axum::http::{Method, StatusCode};
-use axum::routing::get;
-use axum::{BoxError, Router};
+use axum::routing::{get, post};
+use axum::{BoxError, Json, Router};
 use rust_llm_rag::infrastructure::vector_db::{init_client, QdrantDb};
-use rust_llm_rag::llm::handler::doc_reading;
+use rust_llm_rag::llm::handler::{doc_reading, prompt_adding};
+use rust_llm_rag::llm::model::PromptAddingReq;
 use rust_llm_rag::startup::setting::Setting;
 use std::sync::Arc;
 use std::time::Duration;
@@ -45,6 +46,13 @@ async fn main() {
             get({
                 let shared_setting = Arc::clone(&setting);
                 move || doc_reading(shared_setting)
+            }),
+        )
+        .route(
+            "/v1/prompt-adding",
+            post({
+                let shared_db = Arc::clone(&qdrant_db);
+                move |body: Json<PromptAddingReq>| prompt_adding(body, shared_db)
             }),
         )
         .layer(TraceLayer::new_for_http())

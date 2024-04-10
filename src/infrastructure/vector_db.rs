@@ -17,9 +17,9 @@ pub fn init_client(setting: Arc<Setting>) -> QdrantClient {
 }
 
 impl QdrantDb {
-    pub fn new(client: QdrantClient) -> Self {
-        QdrantDb {
+    pub fn new(client: QdrantClient) -> Arc<Self> {
+        Arc::new(QdrantDb {
             client: Arc::new(client),
-        }
+        })
     }
 }
