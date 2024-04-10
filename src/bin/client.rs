@@ -3,7 +3,9 @@ use axum::http::{Method, StatusCode};
 use axum::routing::get;
 use axum::{BoxError, Router};
 use rust_llm_rag::infrastructure::vector_db::{init_client, QdrantDb};
+use rust_llm_rag::llm::handler::doc_reading;
 use rust_llm_rag::startup::setting::Setting;
+use std::sync::Arc;
 use std::time::Duration;
 use tower::timeout::TimeoutLayer;
 use tower::ServiceBuilder;
@@ -20,7 +22,7 @@ async fn main() {
 
     let setting = Setting::new();
 
-    let vector_db_client = init_client(setting.clone());
+    let vector_db_client = init_client(Arc::clone(&setting));
     let qdrant_db = QdrantDb::new(vector_db_client);
 
     let app = Router::new()
@@ -38,7 +40,13 @@ async fn main() {
         .layer(RequestBodyLimitLayer::new(
             setting.server.body_limit.try_into().unwrap(),
         ))
-        .route("/", get(|| async { "Hello, World!" }))
+        .route(
+            "/v1/doc-reading",
+            get({
+                let shared_setting = Arc::clone(&setting);
+                move || doc_reading(shared_setting)
+            }),
+        )
         .layer(TraceLayer::new_for_http())
         .layer(
             ServiceBuilder::new()

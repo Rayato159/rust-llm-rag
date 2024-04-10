@@ -6,6 +6,7 @@ use config::Config;
 pub struct Setting {
     pub server: Server,
     pub vector_db: VectorDb,
+    pub doc: Doc,
 }
 
 #[derive(Debug, Clone)]
@@ -18,6 +19,11 @@ pub struct Server {
     pub port: u16,
     pub body_limit: u32,
     pub timeout: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct Doc {
+    pub path: String,
 }
 
 impl Setting {
@@ -36,6 +42,9 @@ impl Setting {
             vector_db: VectorDb {
                 host: settings.get_string("vector_db.host").unwrap(),
                 port: settings.get_int("vector_db.port").unwrap() as u16,
+            },
+            doc: Doc {
+                path: settings.get_string("doc.path").unwrap(),
             },
         })
     }
