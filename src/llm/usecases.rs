@@ -19,12 +19,16 @@ pub trait Usecases {
 
 #[derive(Clone)]
 pub struct UsecasesImpl {
+    ollama: Ollama,
     db: Arc<QdrantDb>,
 }
 
 impl UsecasesImpl {
     pub fn new(db: Arc<QdrantDb>) -> Arc<Self> {
-        Arc::new(Self { db })
+        Arc::new(Self {
+            db,
+            ollama: Ollama::default(),
+        })
     }
 }
 
@@ -34,9 +38,8 @@ impl Usecases for UsecasesImpl {
         &self,
         req: PromptAddingReq,
     ) -> Result<PromptAddingSuccess, errors::PromptAdding> {
-        let ollama = Ollama::default();
-
-        let prompt_embedded = ollama
+        let prompt_embedded = &self
+            .ollama
             .generate_embeddings(EMBEDDINGS_MODEL.to_string(), req.clone().prompt, None)
             .await
             .map_err(|e| {
