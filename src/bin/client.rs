@@ -1,17 +1,9 @@
-use axum::error_handling::HandleErrorLayer;
-use axum::http::{Method, StatusCode};
-use axum::routing::post;
-use axum::{BoxError, Json, Router};
+use axum::Router;
 use rust_llm_rag::infrastructure::vector_db::{init_client, QdrantDb};
-use rust_llm_rag::llm::model::DocAddingReq;
 use rust_llm_rag::llm::{handlers, usecases};
 use rust_llm_rag::setting::setting::Setting;
+use socketioxide::{extract::SocketRef, SocketIo};
 use std::sync::Arc;
-use std::time::Duration;
-use tower::timeout::TimeoutLayer;
-use tower::ServiceBuilder;
-use tower_http::cors::{Any, CorsLayer};
-use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
@@ -29,38 +21,22 @@ async fn main() {
     let llm_usecases = usecases::UsecasesImpl::new(Arc::clone(&qdrant_db));
     let llm_handlers = handlers::Handlers::new(Arc::clone(&llm_usecases));
 
+    let (socket_layer, io) = SocketIo::builder()
+        .max_payload(Arc::clone(&setting).server.max_payload)
+        .max_buffer_size(Arc::clone(&setting).server.max_buffer_size)
+        .build_layer();
+
+    // Register a handler for the default namespace
+    io.ns("/", |s: SocketRef| {
+        // For each "message" event received, send a "message-back" event with the "Hello World!" event
+        s.on("message", |s: SocketRef| {
+            s.emit("message-back", "Hello World!").ok();
+        });
+    });
+
     let app = Router::new()
-        .layer(
-            CorsLayer::new()
-                .allow_methods([
-                    Method::GET,
-                    Method::POST,
-                    Method::PUT,
-                    Method::PATCH,
-                    Method::DELETE,
-                ])
-                .allow_origin(Any),
-        )
-        .layer(RequestBodyLimitLayer::new(
-            Arc::clone(&setting).server.body_limit.try_into().unwrap(),
-        ))
-        .route(
-            "/v1/doc-adding",
-            post({
-                move |body: Json<DocAddingReq>| async move { llm_handlers.doc_adding(body).await }
-            }),
-        )
         .layer(TraceLayer::new_for_http())
-        .layer(
-            ServiceBuilder::new()
-                .layer(HandleErrorLayer::new(|_: BoxError| async {
-                    StatusCode::REQUEST_TIMEOUT
-                }))
-                .layer(TimeoutLayer::new(Duration::from_secs(
-                    Arc::clone(&setting).server.timeout.try_into().unwrap(),
-                ))),
-        )
-        .fallback(|| async { "Not Found" });
+        .layer(socket_layer);
 
     let uri = format!("0.0.0.0:{}", setting.server.port);
     let listener = tokio::net::TcpListener::bind(&uri).await.unwrap();

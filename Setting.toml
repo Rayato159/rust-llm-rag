@@ -1,7 +1,8 @@
 [server]
 port = 8080
 timeout = 30
-body_limit = 10 # MiB
+max_payload = 10 # MiB
+max_buffer_size = 10 # MiB
 
 [vector_db]
 host = "localhost"

@@ -17,8 +17,9 @@ pub struct VectorDb {
 #[derive(Debug, Clone)]
 pub struct Server {
     pub port: u16,
-    pub body_limit: u32,
     pub timeout: u32,
+    pub max_payload: u64,
+    pub max_buffer_size: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -36,8 +37,9 @@ impl Setting {
         Arc::new(Setting {
             server: Server {
                 port: settings.get_int("server.port").unwrap() as u16,
-                body_limit: settings.get_int("server.body_limit").unwrap() as u32,
                 timeout: settings.get_int("server.timeout").unwrap() as u32,
+                max_payload: settings.get_int("server.max_payload").unwrap() as u64,
+                max_buffer_size: settings.get_int("server.max_buffer_size").unwrap() as usize,
             },
             vector_db: VectorDb {
                 host: settings.get_string("vector_db.host").unwrap(),
