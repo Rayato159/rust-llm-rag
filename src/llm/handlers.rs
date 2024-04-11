@@ -29,9 +29,7 @@ where
         match result {
             Ok(r) => (
                 http::StatusCode::OK,
-                Json(PromptAddingSuccess {
-                    prompt: r.clone().prompt,
-                }),
+                Json(r),
             )
                 .into_response(),
             Err(e) => (

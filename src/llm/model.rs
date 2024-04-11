@@ -7,7 +7,7 @@ pub struct PromptAddingReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PromptAddingSuccess {
-    pub prompt: String,
+    pub embedded: Vec<f64>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

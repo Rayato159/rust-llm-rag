@@ -5,6 +5,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use ollama_rs::Ollama;
+use tracing::info;
 use std::sync::Arc;
 
 const EMBEDDINGS_MODEL: &str = "nomic-embed-text:latest";
@@ -47,10 +48,12 @@ impl Usecases for UsecasesImpl {
                 errors::PromptAdding
             })?;
 
-        dbg!("{:?}", prompt_embedded);
+        
+
+        info!("embeddeding prompt completed");
 
         Ok(PromptAddingSuccess {
-            prompt: req.clone().prompt,
+            embedded: prompt_embedded.clone().embeddings,
         })
     }
 }
