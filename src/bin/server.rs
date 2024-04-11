@@ -3,8 +3,8 @@ use axum::http::{Method, StatusCode};
 use axum::routing::post;
 use axum::{BoxError, Json, Router};
 use rust_llm_rag::infrastructure::vector_db::{init_client, QdrantDb};
-use rust_llm_rag::llm::handlers::prompt_adding;
 use rust_llm_rag::llm::model::PromptAddingReq;
+use rust_llm_rag::llm::{handlers, usecases};
 use rust_llm_rag::setting::setting::Setting;
 use std::sync::Arc;
 use std::time::Duration;
@@ -26,6 +26,9 @@ async fn main() {
     let vector_db_client = init_client(Arc::clone(&setting));
     let qdrant_db = QdrantDb::new(vector_db_client);
 
+    let llm_usecases = usecases::UsecasesImpl::new(Arc::clone(&qdrant_db));
+    let llm_handlers = handlers::Handlers::new(Arc::clone(&llm_usecases));
+
     let app = Router::new()
         .layer(
             CorsLayer::new()
@@ -43,10 +46,9 @@ async fn main() {
         ))
         .route(
             "/v1/prompt-adding",
-            post({
-                let shared_db = Arc::clone(&qdrant_db);
-                move |body: Json<PromptAddingReq>| prompt_adding(body, shared_db)
-            }),
+            post(
+                |body: Json<PromptAddingReq>| async move { llm_handlers.prompt_adding(body).await },
+            ),
         )
         .layer(TraceLayer::new_for_http())
         .layer(

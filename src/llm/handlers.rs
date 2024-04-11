@@ -1,27 +1,46 @@
 use super::model::{Error, PromptAddingReq, PromptAddingSuccess};
-use super::usecases;
-use crate::infrastructure::vector_db::QdrantDb;
+use super::usecases::Usecases;
 use axum::{extract, http, response::IntoResponse, Json};
 use std::sync::Arc;
 
-pub async fn prompt_adding(
-    extract::Json(req): extract::Json<PromptAddingReq>,
-    db: Arc<QdrantDb>,
-) -> impl IntoResponse {
-    let result = usecases::prompt_adding(req, db).await;
+pub struct Handlers<T>
+where
+    T: Usecases + Clone + Send + Sync + 'static,
+{
+    usecases: Arc<T>,
+}
 
-    match result {
-        Ok(r) => (
-            http::StatusCode::OK,
-            Json(PromptAddingSuccess { prompt: r.prompt }),
-        )
-            .into_response(),
-        Err(e) => (
-            http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(Error {
-                error: e.to_string(),
-            }),
-        )
-            .into_response(),
+impl<T> Handlers<T>
+where
+    T: Usecases + Clone + Send + Sync + 'static,
+{
+    pub fn new(usecases: Arc<T>) -> Arc<Self> {
+        Arc::new(Self {
+            usecases: Arc::clone(&usecases),
+        })
+    }
+
+    pub async fn prompt_adding(
+        &self,
+        extract::Json(req): extract::Json<PromptAddingReq>,
+    ) -> impl IntoResponse {
+        let result = &self.usecases.prompt_adding(req).await;
+
+        match result {
+            Ok(r) => (
+                http::StatusCode::OK,
+                Json(PromptAddingSuccess {
+                    prompt: r.clone().prompt,
+                }),
+            )
+                .into_response(),
+            Err(e) => (
+                http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(Error {
+                    error: e.to_string(),
+                }),
+            )
+                .into_response(),
+        }
     }
 }

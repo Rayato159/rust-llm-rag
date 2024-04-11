@@ -1444,6 +1444,7 @@ dependencies = [
 name = "rust-llm-rag"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "axum 0.7.5",
  "config",
  "ollama-rs",

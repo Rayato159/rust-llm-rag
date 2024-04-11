@@ -5,7 +5,7 @@ pub struct PromptAddingReq {
     pub prompt: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PromptAddingSuccess {
     pub prompt: String,
 }
