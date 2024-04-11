@@ -1,4 +1,4 @@
-use super::model::{Error, DocAddingReq};
+use super::model::{DocAddingReq, Error};
 use super::usecases::Usecases;
 use axum::{extract, http, response::IntoResponse, Json};
 use std::sync::Arc;
@@ -27,11 +27,7 @@ where
         let result = &self.usecases.doc_adding(req).await;
 
         match result {
-            Ok(r) => (
-                http::StatusCode::OK,
-                Json(r),
-            )
-                .into_response(),
+            Ok(r) => (http::StatusCode::OK, Json(r)).into_response(),
             Err(e) => (
                 http::StatusCode::INTERNAL_SERVER_ERROR,
                 Json(Error {
