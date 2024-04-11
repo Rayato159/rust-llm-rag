@@ -5,7 +5,7 @@ use axum::{BoxError, Json, Router};
 use rust_llm_rag::infrastructure::vector_db::{init_client, QdrantDb};
 use rust_llm_rag::llm::handlers::prompt_adding;
 use rust_llm_rag::llm::model::PromptAddingReq;
-use rust_llm_rag::startup::setting::Setting;
+use rust_llm_rag::setting::setting::Setting;
 use std::sync::Arc;
 use std::time::Duration;
 use tower::timeout::TimeoutLayer;
