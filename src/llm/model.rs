@@ -7,6 +7,7 @@ pub struct DocAddingReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocAddingSuccess {
+    pub id: String,
     pub embedded: Vec<f64>,
 }
 

@@ -8,7 +8,6 @@ use ollama_rs::Ollama;
 use qdrant_client::qdrant::PointStruct;
 use serde_json::json;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::{error, info};
 use uuid::Uuid;
 
@@ -60,7 +59,7 @@ impl Usecases for UsecasesImpl {
         })?;
 
         let id = Uuid::new_v4().to_string();
-        let points = vec![PointStruct::new(id, doc_embedded_vec, payload)];
+        let points = vec![PointStruct::new(id.clone(), doc_embedded_vec, payload)];
 
         self.db
             .client
@@ -74,6 +73,7 @@ impl Usecases for UsecasesImpl {
         info!("embeddeding doc completed");
 
         Ok(DocAddingSuccess {
+            id: id.clone(),
             embedded: doc_embedded.clone().embeddings,
         })
     }
