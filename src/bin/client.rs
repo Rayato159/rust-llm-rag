@@ -2,6 +2,7 @@ use axum::Router;
 use rust_llm_rag::infrastructure::vector_db::{init_client, QdrantDb};
 use rust_llm_rag::llm::{handlers, usecases};
 use rust_llm_rag::setting::setting::Setting;
+use socketioxide::extract::Data;
 use socketioxide::{extract::SocketRef, SocketIo};
 use std::sync::Arc;
 use tower_http::trace::TraceLayer;
@@ -29,9 +30,14 @@ async fn main() {
     // Register a handler for the default namespace
     io.ns("/", |s: SocketRef| {
         // For each "message" event received, send a "message-back" event with the "Hello World!" event
-        s.on("message", |s: SocketRef| {
-            s.emit("message-back", "Hello World!").ok();
-        });
+        s.on(
+            "prompt",
+            |s: SocketRef, Data::<String>(prompt)| async move {
+                let result = llm_handlers.chatting(prompt.clone()).await;
+                
+                s.broadcast().emit("result", result).ok();
+            },
+        );
     });
 
     let app = Router::new()

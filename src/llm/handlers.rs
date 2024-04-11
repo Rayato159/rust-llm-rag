@@ -1,6 +1,5 @@
 use super::usecases::Usecases;
 use std::sync::Arc;
-use tracing::{error, info};
 
 pub struct Handlers<T>
 where
@@ -19,16 +18,12 @@ where
         })
     }
 
-    pub async fn doc_adding(&self, doc: String) {
-        let result = &self.usecases.doc_adding(doc).await;
+    pub async fn chatting(&self, prompt: String) -> String {
+        let result = &self.usecases.doc_adding(prompt).await;
 
         match result {
-            Ok(_) => {
-                info!("Document added successfully");
-            }
-            Err(e) => {
-                error!("Error adding the document: {:?}", e);
-            }
+            Ok(r) => r.to_string(),
+            Err(e) => format!("Error adding the document: {:?}", e),
         }
     }
 }

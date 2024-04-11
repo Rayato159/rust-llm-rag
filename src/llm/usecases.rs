@@ -13,7 +13,7 @@ const COLLECTION: &str = "docs";
 
 #[async_trait]
 pub trait Usecases {
-    async fn doc_adding(&self, doc: String) -> Result<String, errors::Error>;
+    async fn doc_adding(&self, prompt: String) -> Result<String, errors::Error>;
 }
 
 #[derive(Clone)]
@@ -30,10 +30,10 @@ impl UsecasesImpl {
         })
     }
 
-    async fn embedding(&self, doc: String) -> Result<Vec<f32>, errors::Error> {
+    async fn embedding(&self, prompt: String) -> Result<Vec<f32>, errors::Error> {
         let doc_embedded = &self
             .ollama
-            .generate_embeddings(EMBEDDINGS_MODEL.to_string(), doc.clone(), None)
+            .generate_embeddings(EMBEDDINGS_MODEL.to_string(), prompt.clone(), None)
             .await
             .map_err(|e| {
                 errors::Error::new(&format!("Error generating embeddings: {}", e.to_string()))
