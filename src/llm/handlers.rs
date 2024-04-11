@@ -1,11 +1,11 @@
 use super::model::{DocReadingSuccess, Error, PromptAddingReq, PromptAddingSuccess};
-use crate::llm::usecase;
+use super::usecases;
 use crate::{infrastructure::vector_db::QdrantDb, startup::setting::Setting};
 use axum::{extract, http, response::IntoResponse, Json};
 use std::sync::Arc;
 
 pub async fn doc_reading(setting: Arc<Setting>) -> impl IntoResponse {
-    let document = usecase::doc_reading::doc_reading(setting).await;
+    let document = usecases::doc_reading(setting).await;
 
     match document {
         Ok(r) => (
@@ -24,10 +24,10 @@ pub async fn doc_reading(setting: Arc<Setting>) -> impl IntoResponse {
 }
 
 pub async fn prompt_adding(
-    extract::Json(payload): extract::Json<PromptAddingReq>,
+    extract::Json(req): extract::Json<PromptAddingReq>,
     db: Arc<QdrantDb>,
 ) -> impl IntoResponse {
-    let result = usecase::prompt_adding::prompt_adding(payload, db).await;
+    let result = usecases::prompt_adding(req, db).await;
 
     match result {
         Ok(r) => (

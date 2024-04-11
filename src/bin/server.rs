@@ -3,7 +3,7 @@ use axum::http::{Method, StatusCode};
 use axum::routing::{get, post};
 use axum::{BoxError, Json, Router};
 use rust_llm_rag::infrastructure::vector_db::{init_client, QdrantDb};
-use rust_llm_rag::llm::handler::{doc_reading, prompt_adding};
+use rust_llm_rag::llm::handlers::{doc_reading, prompt_adding};
 use rust_llm_rag::llm::model::PromptAddingReq;
 use rust_llm_rag::startup::setting::Setting;
 use std::sync::Arc;

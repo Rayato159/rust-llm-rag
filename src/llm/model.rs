@@ -6,7 +6,7 @@ pub struct DocReadingSuccess {
 }
 
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PromptAddingReq {
     pub prompt: String,
 }
