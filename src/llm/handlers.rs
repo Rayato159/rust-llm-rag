@@ -1,27 +1,8 @@
-use super::model::{DocReadingSuccess, Error, PromptAddingReq, PromptAddingSuccess};
+use super::model::{Error, PromptAddingReq, PromptAddingSuccess};
 use super::usecases;
-use crate::{infrastructure::vector_db::QdrantDb, startup::setting::Setting};
+use crate::infrastructure::vector_db::QdrantDb;
 use axum::{extract, http, response::IntoResponse, Json};
 use std::sync::Arc;
-
-pub async fn doc_reading(setting: Arc<Setting>) -> impl IntoResponse {
-    let document = usecases::doc_reading(setting).await;
-
-    match document {
-        Ok(r) => (
-            http::StatusCode::OK,
-            Json(DocReadingSuccess { document: r }),
-        )
-            .into_response(),
-        Err(e) => (
-            http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(Error {
-                error: e.to_string(),
-            }),
-        )
-            .into_response(),
-    }
-}
 
 pub async fn prompt_adding(
     extract::Json(req): extract::Json<PromptAddingReq>,
