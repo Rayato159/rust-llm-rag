@@ -29,38 +29,41 @@ async fn main() {
     let llm_usecases = usecases::UsecasesImpl::new(Arc::clone(&qdrant_db));
     let llm_handlers = handlers::Handlers::new(Arc::clone(&llm_usecases));
 
-    let app = Router::new()
-        .layer(
-            CorsLayer::new()
-                .allow_methods([
-                    Method::GET,
-                    Method::POST,
-                    Method::PUT,
-                    Method::PATCH,
-                    Method::DELETE,
-                ])
-                .allow_origin(Any),
-        )
-        .layer(RequestBodyLimitLayer::new(
-            setting.server.body_limit.try_into().unwrap(),
-        ))
-        .route(
-            "/v1/prompt-adding",
-            post(
-                |body: Json<PromptAddingReq>| async move { llm_handlers.prompt_adding(body).await },
-            ),
-        )
-        .layer(TraceLayer::new_for_http())
-        .layer(
-            ServiceBuilder::new()
-                .layer(HandleErrorLayer::new(|_: BoxError| async {
-                    StatusCode::REQUEST_TIMEOUT
-                }))
-                .layer(TimeoutLayer::new(Duration::from_secs(
-                    setting.server.timeout.try_into().unwrap(),
-                ))),
-        )
-        .fallback(|| async { "Not Found" });
+    let app =
+        Router::new()
+            .layer(
+                CorsLayer::new()
+                    .allow_methods([
+                        Method::GET,
+                        Method::POST,
+                        Method::PUT,
+                        Method::PATCH,
+                        Method::DELETE,
+                    ])
+                    .allow_origin(Any),
+            )
+            .layer(RequestBodyLimitLayer::new(
+                setting.server.body_limit.try_into().unwrap(),
+            ))
+            .route(
+                "/v1/prompt-adding",
+                post({
+                    move |body: Json<PromptAddingReq>| async move {
+                        llm_handlers.prompt_adding(body).await
+                    }
+                }),
+            )
+            .layer(TraceLayer::new_for_http())
+            .layer(
+                ServiceBuilder::new()
+                    .layer(HandleErrorLayer::new(|_: BoxError| async {
+                        StatusCode::REQUEST_TIMEOUT
+                    }))
+                    .layer(TimeoutLayer::new(Duration::from_secs(
+                        setting.server.timeout.try_into().unwrap(),
+                    ))),
+            )
+            .fallback(|| async { "Not Found" });
 
     let uri = format!("0.0.0.0:{}", setting.server.port);
     let listener = tokio::net::TcpListener::bind(&uri).await.unwrap();
