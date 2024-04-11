@@ -2,6 +2,10 @@
 
 This project is to shake the RUST off of my machine learning skills and learn about the emerging technologies in this era, particularly large language models (LLMs).
 
+# 📹 Demo Video
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/bZm2F1USWu0/0.jpg)](https://youtu.be/bZm2F1USWu0)
+
 # 📐 Architecture
 
 ![alt text](./screenshots/arch.png "Architecture")
