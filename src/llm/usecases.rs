@@ -32,22 +32,31 @@ impl UsecasesImpl {
             ollama: Ollama::default(),
         })
     }
+
+    async fn embedding(&self, doc: String) -> Result<Vec<f32>, errors::DocEmbedding> {
+        let doc_embedded = &self
+            .ollama
+            .generate_embeddings(EMBEDDINGS_MODEL.to_string(), doc.clone(), None)
+            .await
+            .map_err(|e| {
+                error!("{:?}", e);
+                errors::DocEmbedding
+            })?;
+
+        let result: Vec<f32> = doc_embedded.embeddings.iter().map(|&x| x as f32).collect();
+
+        Ok(result)
+    }
 }
 
 #[async_trait]
 impl Usecases for UsecasesImpl {
     async fn doc_adding(&self, req: DocAddingReq) -> Result<DocAddingSuccess, errors::DocAdding> {
-        let doc_embedded = &self
-            .ollama
-            .generate_embeddings(EMBEDDINGS_MODEL.to_string(), req.clone().doc, None)
-            .await
-            .map_err(|e| {
-                error!("{:?}", e);
-                errors::DocAdding
-            })?;
-
-        let doc_embedded_vec: Vec<f32> =
-            doc_embedded.embeddings.iter().map(|&x| x as f32).collect();
+        let doc = req.clone().doc;
+        let doc_embedded = &self.embedding(doc).await.map_err(|e| {
+            error!("{:?}", e);
+            errors::DocAdding
+        })?;
 
         let payload = json!({
             "doc": req.doc,
@@ -59,22 +68,23 @@ impl Usecases for UsecasesImpl {
         })?;
 
         let id = Uuid::new_v4().to_string();
-        let points = vec![PointStruct::new(id.clone(), doc_embedded_vec, payload)];
+        let points = vec![PointStruct::new(id.clone(), doc_embedded.clone(), payload)];
 
-        self.db
+        let operation_info = self
+            .db
             .client
-            .upsert_points(COLLECTION, None, points, None)
+            .upsert_points_blocking(COLLECTION.to_string(), None, points, None)
             .await
             .map_err(|e| {
                 error!("{:?}", e);
                 errors::DocAdding
             })?;
 
-        info!("embeddeding doc completed");
+        info!("{:?}", operation_info);
 
         Ok(DocAddingSuccess {
             id: id.clone(),
-            embedded: doc_embedded.clone().embeddings,
+            embedded: doc_embedded.clone(),
         })
     }
 }
