@@ -5,7 +5,7 @@ body_limit = 10 # MiB
 
 [vector_db]
 host = "localhost"
-port = 6333
+port = 6334
 
 [doc]
 path = "./docs/tangv1.txt"
