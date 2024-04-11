@@ -1,6 +1,6 @@
 use axum::error_handling::HandleErrorLayer;
 use axum::http::{Method, StatusCode};
-use axum::routing::{get, post};
+use axum::routing::post;
 use axum::{BoxError, Json, Router};
 use rust_llm_rag::infrastructure::vector_db::{init_client, QdrantDb};
 use rust_llm_rag::llm::handlers::prompt_adding;
