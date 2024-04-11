@@ -65,12 +65,18 @@ impl UsecasesImpl {
             return Ok("".to_string());
         }
 
-        let best_result = result.result[0]
-            .payload
-            .get("doc")
-            .unwrap()
-            .as_str()
-            .unwrap();
+        let best_result = result
+            .result
+            .iter()
+            .map(|r| {
+                r.payload
+                    .get("doc")
+                    .and_then(|doc| doc.as_str())
+                    .map(|doc| doc.to_string())
+                    .unwrap_or_default()
+            })
+            .collect::<Vec<String>>()
+            .join("\n");
 
         Ok(best_result.to_string())
     }
@@ -113,13 +119,11 @@ impl Usecases for UsecasesImpl {
 
     async fn chatting(&self, prompt: String, context: String, model: String) -> String {
         let metaprompt = format!(
-            "
-        Question: {}
+            "User's question: {}\n
+
+            Relevant history: {}\n
         
-        Context: {}
-        
-        Answer:
-        ",
+            Please provide a response to the user's question, considering the relevant history.\n",
             prompt, context
         );
 
