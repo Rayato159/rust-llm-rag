@@ -2,7 +2,7 @@
 name = "rust-llm-rag"
 version = "0.1.0"
 edition = "2021"
-default-run = "server"
+default-run = "backend"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -20,3 +20,4 @@ ollama-rs = "0.1.8"
 async-trait = "0.1.79"
 serde_json = "1.0.115"
 uuid = { version = "1.8.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
+socketioxide = "0.12.0"
