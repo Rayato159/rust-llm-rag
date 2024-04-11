@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PromptAddingReq {
-    pub prompt: String,
+pub struct DocAddingReq {
+    pub doc: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PromptAddingSuccess {
+pub struct DocAddingSuccess {
     pub embedded: Vec<f64>,
 }
 

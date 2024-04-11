@@ -1,4 +1,4 @@
-use super::model::{Error, PromptAddingReq, PromptAddingSuccess};
+use super::model::{Error, DocAddingReq};
 use super::usecases::Usecases;
 use axum::{extract, http, response::IntoResponse, Json};
 use std::sync::Arc;
@@ -20,11 +20,11 @@ where
         })
     }
 
-    pub async fn prompt_adding(
+    pub async fn doc_adding(
         &self,
-        extract::Json(req): extract::Json<PromptAddingReq>,
+        extract::Json(req): extract::Json<DocAddingReq>,
     ) -> impl IntoResponse {
-        let result = &self.usecases.prompt_adding(req).await;
+        let result = &self.usecases.doc_adding(req).await;
 
         match result {
             Ok(r) => (

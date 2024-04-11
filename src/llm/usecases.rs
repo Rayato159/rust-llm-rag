@@ -1,21 +1,25 @@
 use super::errors;
 use crate::{
     infrastructure::vector_db::QdrantDb,
-    llm::model::{PromptAddingReq, PromptAddingSuccess},
+    llm::model::{DocAddingReq, DocAddingSuccess},
 };
 use async_trait::async_trait;
 use ollama_rs::Ollama;
-use tracing::info;
+use qdrant_client::qdrant::PointStruct;
+use serde_json::json;
 use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+use tracing::{error, info};
 
 const EMBEDDINGS_MODEL: &str = "nomic-embed-text:latest";
+const COLLECTION: &str = "docs";
 
 #[async_trait]
 pub trait Usecases {
-    async fn prompt_adding(
+    async fn doc_adding(
         &self,
-        req: PromptAddingReq,
-    ) -> Result<PromptAddingSuccess, errors::PromptAdding>;
+        req: DocAddingReq,
+    ) -> Result<DocAddingSuccess, errors::DocAdding>;
 }
 
 #[derive(Clone)]
@@ -35,25 +39,54 @@ impl UsecasesImpl {
 
 #[async_trait]
 impl Usecases for UsecasesImpl {
-    async fn prompt_adding(
+    async fn doc_adding(
         &self,
-        req: PromptAddingReq,
-    ) -> Result<PromptAddingSuccess, errors::PromptAdding> {
-        let prompt_embedded = &self
+        req: DocAddingReq,
+    ) -> Result<DocAddingSuccess, errors::DocAdding> {
+        let doc_embedded = &self
             .ollama
-            .generate_embeddings(EMBEDDINGS_MODEL.to_string(), req.clone().prompt, None)
+            .generate_embeddings(EMBEDDINGS_MODEL.to_string(), req.clone().doc, None)
             .await
             .map_err(|e| {
-                println!("{:?}", e);
-                errors::PromptAdding
+                error!("{:?}", e);
+                errors::DocAdding
             })?;
 
-        
+        let doc_embedded_vec: Vec<f32> = doc_embedded
+            .embeddings
+            .iter()
+            .map(|&x| x as f32)
+            .collect();
 
-        info!("embeddeding prompt completed");
+        let payload = json!({
+            "doc": req.doc,
+        })
+        .try_into()
+        .map_err(|e| {
+            error!("{:?}", e);
+            errors::DocAdding
+        })?;
 
-        Ok(PromptAddingSuccess {
-            embedded: prompt_embedded.clone().embeddings,
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        let points = vec![PointStruct::new(now, doc_embedded_vec, payload)];
+
+        self.db
+            .client
+            .upsert_points(COLLECTION, None, points, None)
+            .await
+            .map_err(|e| {
+                error!("{:?}", e);
+                errors::DocAdding
+            })?;
+
+        info!("embeddeding doc completed");
+
+        Ok(DocAddingSuccess {
+            embedded: doc_embedded.clone().embeddings,
         })
     }
 }

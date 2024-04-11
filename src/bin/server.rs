@@ -3,7 +3,7 @@ use axum::http::{Method, StatusCode};
 use axum::routing::post;
 use axum::{BoxError, Json, Router};
 use rust_llm_rag::infrastructure::vector_db::{init_client, QdrantDb};
-use rust_llm_rag::llm::model::PromptAddingReq;
+use rust_llm_rag::llm::model::DocAddingReq;
 use rust_llm_rag::llm::{handlers, usecases};
 use rust_llm_rag::setting::setting::Setting;
 use std::sync::Arc;
@@ -46,10 +46,10 @@ async fn main() {
                 setting.server.body_limit.try_into().unwrap(),
             ))
             .route(
-                "/v1/prompt-adding",
+                "/v1/doc-adding",
                 post({
-                    move |body: Json<PromptAddingReq>| async move {
-                        llm_handlers.prompt_adding(body).await
+                    move |body: Json<DocAddingReq>| async move {
+                        llm_handlers.doc_adding(body).await
                     }
                 }),
             )
