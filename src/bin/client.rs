@@ -35,7 +35,7 @@ async fn main() {
             |s: SocketRef, Data::<String>(prompt)| async move {
                 let result = llm_handlers.chatting(prompt.clone()).await;
 
-                s.broadcast().emit("result", result).ok();
+                s.emit("result", result).ok();
             },
         );
     });
