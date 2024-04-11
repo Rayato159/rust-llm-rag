@@ -7,6 +7,7 @@ use async_trait::async_trait;
 use ollama_rs::Ollama;
 use qdrant_client::qdrant::PointStruct;
 use serde_json::json;
+use uuid::Uuid;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::{error, info};
@@ -67,12 +68,8 @@ impl Usecases for UsecasesImpl {
             errors::DocAdding
         })?;
 
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-
-        let points = vec![PointStruct::new(now, doc_embedded_vec, payload)];
+        let id = Uuid::new_v4().to_string();
+        let points = vec![PointStruct::new(id, doc_embedded_vec, payload)];
 
         self.db
             .client
