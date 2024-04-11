@@ -10,3 +10,6 @@ port = 6334
 
 [doc]
 path = "./docs/tangv1.txt"
+
+[llm]
+model = "mymodelv1"

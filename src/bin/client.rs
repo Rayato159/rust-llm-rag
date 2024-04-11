@@ -1,4 +1,5 @@
 use axum::Router;
+use ollama_rs::Ollama;
 use rust_llm_rag::infrastructure::vector_db::{init_client, QdrantDb};
 use rust_llm_rag::llm::{handlers, usecases};
 use rust_llm_rag::setting::setting::Setting;
@@ -15,11 +16,14 @@ async fn main() {
         .init();
 
     let setting = Setting::new();
+    let model = Arc::new(&setting).llm.model.clone();
 
     let vector_db_client = init_client(Arc::clone(&setting));
     let qdrant_db = QdrantDb::new(vector_db_client);
 
-    let llm_usecases = usecases::UsecasesImpl::new(Arc::clone(&qdrant_db));
+    let ollama = Arc::new(Ollama::default());
+
+    let llm_usecases = usecases::UsecasesImpl::new(Arc::clone(&qdrant_db), Arc::clone(&ollama));
     let llm_handlers = handlers::Handlers::new(Arc::clone(&llm_usecases));
 
     let (socket_layer, io) = SocketIo::builder()
@@ -33,7 +37,7 @@ async fn main() {
         s.on(
             "prompt",
             |s: SocketRef, Data::<String>(prompt)| async move {
-                let result = llm_handlers.chatting(prompt.clone()).await;
+                let result = llm_handlers.chatting(prompt, model).await;
 
                 s.emit("result", result).ok();
             },
@@ -44,10 +48,13 @@ async fn main() {
         .layer(TraceLayer::new_for_http())
         .layer(socket_layer);
 
-    let uri = format!("0.0.0.0:{}", setting.server.port);
+    let uri = format!("0.0.0.0:{}", Arc::clone(&setting).server.port);
     let listener = tokio::net::TcpListener::bind(&uri).await.unwrap();
 
-    info!("🦀 Server is starting on: :{}", setting.server.port);
+    info!(
+        "🦀 Server is starting on: :{}",
+        Arc::clone(&setting).server.port
+    );
 
     axum::serve(listener, app).await.unwrap();
 }

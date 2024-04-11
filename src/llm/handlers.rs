@@ -18,12 +18,17 @@ where
         })
     }
 
-    pub async fn chatting(&self, prompt: String) -> String {
-        let result = &self.usecases.doc_adding(prompt).await;
+    pub async fn chatting(&self, prompt: String, model: String) -> String {
+        let history_result = &self.usecases.doc_adding(prompt.clone()).await;
 
-        match result {
-            Ok(r) => r.to_string(),
-            Err(e) => format!("Error adding the document: {:?}", e),
-        }
+        let history_prompt: String;
+        match history_result {
+            Ok(r) => history_prompt = r.to_string(),
+            Err(e) => return format!("Error adding the document: {:?}", e),
+        };
+
+        let result = &self.usecases.chatting(prompt, history_prompt, model).await;
+
+        result.to_string()
     }
 }

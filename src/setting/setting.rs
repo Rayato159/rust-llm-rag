@@ -7,6 +7,7 @@ pub struct Setting {
     pub server: Server,
     pub vector_db: VectorDb,
     pub doc: Doc,
+    pub llm: LLM,
 }
 
 #[derive(Debug, Clone)]
@@ -25,6 +26,11 @@ pub struct Server {
 #[derive(Debug, Clone)]
 pub struct Doc {
     pub path: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct LLM {
+    pub model: String,
 }
 
 impl Setting {
@@ -47,6 +53,9 @@ impl Setting {
             },
             doc: Doc {
                 path: settings.get_string("doc.path").unwrap(),
+            },
+            llm: LLM {
+                model: settings.get_string("llm.model").unwrap(),
             },
         })
     }

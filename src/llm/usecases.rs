@@ -1,6 +1,7 @@
 use super::errors;
 use crate::infrastructure::vector_db::QdrantDb;
 use async_trait::async_trait;
+use ollama_rs::generation::completion::request::GenerationRequest;
 use ollama_rs::Ollama;
 use qdrant_client::qdrant::PointStruct;
 use qdrant_client::qdrant::SearchPoints;
@@ -15,20 +16,18 @@ const COLLECTION: &str = "docs";
 #[async_trait]
 pub trait Usecases {
     async fn doc_adding(&self, prompt: String) -> Result<String, errors::Error>;
+    async fn chatting(&self, prompt: String, context: String, model: String) -> String;
 }
 
 #[derive(Clone)]
 pub struct UsecasesImpl {
-    ollama: Ollama,
     db: Arc<QdrantDb>,
+    ollama: Arc<Ollama>,
 }
 
 impl UsecasesImpl {
-    pub fn new(db: Arc<QdrantDb>) -> Arc<Self> {
-        Arc::new(Self {
-            db,
-            ollama: Ollama::default(),
-        })
+    pub fn new(db: Arc<QdrantDb>, ollama: Arc<Ollama>) -> Arc<Self> {
+        Arc::new(Self { db, ollama })
     }
 
     async fn embedding(&self, prompt: String) -> Result<Vec<f32>, errors::Error> {
@@ -61,6 +60,10 @@ impl UsecasesImpl {
             .map_err(|e| {
                 errors::Error::new(&format!("Error searching points: {}", e.to_string()))
             })?;
+
+        if result.result.is_empty() {
+            return Ok("".to_string());
+        }
 
         let best_result = result.result[0]
             .payload
@@ -106,5 +109,28 @@ impl Usecases for UsecasesImpl {
         info!("Operation info: {:?}", operation_info);
 
         Ok(result)
+    }
+
+    async fn chatting(&self, prompt: String, context: String, model: String) -> String {
+        let metaprompt = format!(
+            "
+        Question: {}
+        
+        Context: {}
+        
+        Answer:
+        ",
+            prompt, context
+        );
+
+        let res = &self
+            .ollama
+            .generate(GenerationRequest::new(model, metaprompt))
+            .await;
+
+        match res {
+            Ok(r) => r.response.clone(),
+            Err(e) => format!("Error adding the document: {:?}", e),
+        }
     }
 }
