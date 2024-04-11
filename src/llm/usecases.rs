@@ -1,14 +1,11 @@
 use super::errors;
-use crate::{
-    infrastructure::vector_db::QdrantDb,
-    llm::model::{DocAddingReq, DocAddingSuccess},
-};
+use crate::infrastructure::vector_db::QdrantDb;
 use async_trait::async_trait;
 use ollama_rs::Ollama;
 use qdrant_client::qdrant::PointStruct;
 use serde_json::json;
 use std::sync::Arc;
-use tracing::{error, info};
+use tracing::info;
 use uuid::Uuid;
 
 const EMBEDDINGS_MODEL: &str = "nomic-embed-text:latest";
@@ -16,7 +13,7 @@ const COLLECTION: &str = "docs";
 
 #[async_trait]
 pub trait Usecases {
-    async fn doc_adding(&self, req: DocAddingReq) -> Result<DocAddingSuccess, errors::DocAdding>;
+    async fn doc_adding(&self, doc: String) -> Result<String, errors::Error>;
 }
 
 #[derive(Clone)]
@@ -33,14 +30,13 @@ impl UsecasesImpl {
         })
     }
 
-    async fn embedding(&self, doc: String) -> Result<Vec<f32>, errors::DocEmbedding> {
+    async fn embedding(&self, doc: String) -> Result<Vec<f32>, errors::Error> {
         let doc_embedded = &self
             .ollama
             .generate_embeddings(EMBEDDINGS_MODEL.to_string(), doc.clone(), None)
             .await
             .map_err(|e| {
-                error!("{:?}", e);
-                errors::DocEmbedding
+                errors::Error::new(&format!("Error generating embeddings: {}", e.to_string()))
             })?;
 
         let result: Vec<f32> = doc_embedded.embeddings.iter().map(|&x| x as f32).collect();
@@ -51,20 +47,18 @@ impl UsecasesImpl {
 
 #[async_trait]
 impl Usecases for UsecasesImpl {
-    async fn doc_adding(&self, req: DocAddingReq) -> Result<DocAddingSuccess, errors::DocAdding> {
-        let doc = req.clone().doc;
-        let doc_embedded = &self.embedding(doc).await.map_err(|e| {
-            error!("{:?}", e);
-            errors::DocAdding
-        })?;
+    async fn doc_adding(&self, doc: String) -> Result<String, errors::Error> {
+        let doc_embedded = &self.embedding(doc.clone()).await?;
 
         let payload = json!({
-            "doc": req.doc,
+            "doc": doc.clone(),
         })
         .try_into()
-        .map_err(|e| {
-            error!("{:?}", e);
-            errors::DocAdding
+        .map_err(|_| {
+            errors::Error::new(&format!(
+                "Error converting payload to json: {}",
+                doc.clone()
+            ))
         })?;
 
         let id = Uuid::new_v4().to_string();
@@ -76,15 +70,11 @@ impl Usecases for UsecasesImpl {
             .upsert_points_blocking(COLLECTION.to_string(), None, points, None)
             .await
             .map_err(|e| {
-                error!("{:?}", e);
-                errors::DocAdding
+                errors::Error::new(&format!("Error upserting points: {}", e.to_string()))
             })?;
 
         info!("{:?}", operation_info);
 
-        Ok(DocAddingSuccess {
-            id: id.clone(),
-            embedded: doc_embedded.clone(),
-        })
+        Ok(format!("Document added with id: {}", id))
     }
 }

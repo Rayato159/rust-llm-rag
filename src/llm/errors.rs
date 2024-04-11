@@ -1,28 +1,20 @@
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct DocReading;
+pub struct Error {
+    pub message: String,
+}
 
-impl fmt::Display for DocReading {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Error reading the document")
+impl Error {
+    pub fn new(message: &str) -> Self {
+        Error {
+            message: message.to_string(),
+        }
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct DocAdding;
-
-impl fmt::Display for DocAdding {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Error adding the doc")
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct DocEmbedding;
-
-impl fmt::Display for DocEmbedding {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Error embedding the doc")
+        write!(f, "error: {:?}", &self)
     }
 }
