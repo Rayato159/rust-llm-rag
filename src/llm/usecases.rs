@@ -3,6 +3,7 @@ use crate::infrastructure::vector_db::QdrantDb;
 use async_trait::async_trait;
 use ollama_rs::Ollama;
 use qdrant_client::qdrant::PointStruct;
+use qdrant_client::qdrant::SearchPoints;
 use serde_json::json;
 use std::sync::Arc;
 use tracing::info;
@@ -43,26 +44,55 @@ impl UsecasesImpl {
 
         Ok(result)
     }
+
+    async fn doc_searching(&self, doc_embedded: &Vec<f32>) -> Result<String, errors::Error> {
+        let result = &self
+            .db
+            .client
+            .search_points(&SearchPoints {
+                collection_name: COLLECTION.to_string(),
+                vector: doc_embedded.to_vec(),
+
+                limit: 3,
+                with_payload: Some(true.into()),
+                ..Default::default()
+            })
+            .await
+            .map_err(|e| {
+                errors::Error::new(&format!("Error searching points: {}", e.to_string()))
+            })?;
+
+        let best_result = result.result[0]
+            .payload
+            .get("doc")
+            .unwrap()
+            .as_str()
+            .unwrap();
+
+        Ok(best_result.to_string())
+    }
 }
 
 #[async_trait]
 impl Usecases for UsecasesImpl {
-    async fn doc_adding(&self, doc: String) -> Result<String, errors::Error> {
-        let doc_embedded = &self.embedding(doc.clone()).await?;
+    async fn doc_adding(&self, prompt: String) -> Result<String, errors::Error> {
+        let doc_embedded = &self.embedding(prompt.clone()).await?;
 
         let payload = json!({
-            "doc": doc.clone(),
+            "doc": prompt.clone(),
         })
         .try_into()
         .map_err(|_| {
             errors::Error::new(&format!(
                 "Error converting payload to json: {}",
-                doc.clone()
+                prompt.clone()
             ))
         })?;
 
         let id = Uuid::new_v4().to_string();
         let points = vec![PointStruct::new(id.clone(), doc_embedded.clone(), payload)];
+
+        let result = self.doc_searching(&doc_embedded).await?;
 
         let operation_info = self
             .db
@@ -73,8 +103,8 @@ impl Usecases for UsecasesImpl {
                 errors::Error::new(&format!("Error upserting points: {}", e.to_string()))
             })?;
 
-        info!("{:?}", operation_info);
+        info!("Operation info: {:?}", operation_info);
 
-        Ok(format!("Document added with id: {}", id))
+        Ok(result)
     }
 }
