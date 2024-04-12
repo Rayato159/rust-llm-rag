@@ -8,8 +8,5 @@ max_buffer_size = 10 # MiB
 host = "localhost"
 port = 6334
 
-[doc]
-path = "./docs/tangv1.txt"
-
 [llm]
 model = "mymodelv1"
