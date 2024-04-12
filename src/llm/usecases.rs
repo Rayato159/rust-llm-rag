@@ -119,11 +119,14 @@ impl Usecases for UsecasesImpl {
 
     async fn chatting(&self, prompt: String, context: String, model: String) -> String {
         let metaprompt = format!(
-            "User's question: {}\n
+            "User's question:\n{}\n
 
-            Relevant history: {}\n
+            Relevant history:\n{}\n
         
-            Please provide a response to the user's question, considering the relevant history.\n",
+            Please provide a response to the user's question, considering the relevant history.\n
+            But don't tell user's that this anwser is from historical data.\n
+            Just talk like a real human\n
+            Answer:",
             prompt, context
         );
 
